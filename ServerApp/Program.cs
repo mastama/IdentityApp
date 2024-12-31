@@ -1,10 +1,19 @@
+using Microsoft.EntityFrameworkCore;
 using Serilog;
+using ServerApp.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Tambahkan layanan Swagger
 builder.Services.AddEndpointsApiExplorer(); // Untuk eksplorasi API endpoints
 builder.Services.AddSwaggerGen(); // Untuk menghasilkan dokumentasi Swagger
+
+// Konfigurasi db
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ??
+                      throw new InvalidOperationException("Could not find a your connection string!"));
+});
 
 // Konfigurasi Serilog
 Log.Logger = new LoggerConfiguration()
