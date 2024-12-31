@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using ServerApp.Data;
+using ServerApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +16,30 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ??
                       throw new InvalidOperationException("Could not find a your connection string!"));
 });
+
+// Defining our IdentityCore Service
+builder.Services.AddIdentityCore<User>(options =>
+{
+    // password configuration
+    options.Password.RequiredLength = 8; // min length 8
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    
+    // for email confirmation
+    options.User.RequireUniqueEmail = true; // Pastikan email unik
+    options.SignIn.RequireConfirmedEmail = true; // Wajib konfirmasi email setelah register
+    
+    // for Lockout user
+    options.Lockout.MaxFailedAccessAttempts = 3; // Pengguna terkunci setelah 3 kali gagal login
+})
+.AddRoles<IdentityRole>() // Menambahkan manajemen roles (admin, user)
+.AddRoleManager<RoleManager<IdentityRole>>() // Menambahkan RoleManager
+.AddEntityFrameworkStores<ApplicationDbContext>() // Menyimpan data di EF Core
+.AddSignInManager<SignInManager<User>>() // Menambahkan SigInManager (login & logout)
+.AddUserManager<UserManager<User>>() // Menambahkan UserManager untuk membuat user
+.AddDefaultTokenProviders(); // Menambahkan token default, konfirmasi email
 
 // Konfigurasi Serilog
 Log.Logger = new LoggerConfiguration()
