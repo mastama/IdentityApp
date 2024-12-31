@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Untuk otentikasi pengguna menggunakan JWT Bearer token -->
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
+
+        <!-- Untuk mendukung integrasi Identity framework dengan Entity Framework Core -->
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+
+        <!-- Untuk mendukung pembuatan dan dokumentasi API menggunakan OpenAPI/Swagger -->
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
+
+        <!-- Paket untuk mendukung pengembangan Entity Framework Core, seperti migrasi dan desain database -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+
+        <!-- Alat bantu untuk bekerja dengan Entity Framework Core, seperti migrasi dan penerapan -->
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+
+        <!-- Untuk menyediakan layanan logging, baik untuk debug, error, atau informasi lainnya -->
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+
+        <!-- Entity Framework Core provider untuk PostgreSQL, memungkinkan aplikasi untuk berinteraksi dengan database PostgreSQL -->
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+
+        <!-- Library untuk integrasi dengan Serilog, memungkinkan logging yang lebih fleksibel dan ekspresif -->
+        <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+
+        <!-- Sink untuk menyimpan log ke konsol -->
+<!--        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />-->
+
+        <!-- Sink untuk menyimpan log ke file -->
+<!--        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />-->
+
+        <!-- Swashbuckle untuk menghasilkan dokumentasi Swagger untuk API, termasuk endpoint dan model -->
+<!--        <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="7.2.0" />-->
+
+        <!-- Menghasilkan dokumentasi Swagger dengan konfigurasi tambahan -->
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="7.2.0" />
+
+        <!-- Mengatur antarmuka pengguna Swagger UI untuk berinteraksi dengan API secara visual -->
+        <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="7.2.0" />
+
+        <!-- Paket untuk memproses dan memverifikasi JWT (JSON Web Tokens) dalam otentikasi atau otorisasi -->
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
+    </ItemGroup>
+
+</Project>
