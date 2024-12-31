@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using ServerApp.Data;
@@ -21,21 +22,27 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
                       throw new InvalidOperationException("Could not find a your connection string!"));
 });
 
-// Jwt
+// Tambahkan JWTService sebagai layanan terdaftar
 builder.Services.AddScoped<JwtService>();
+// Bind JwtSetting from configuration
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSection"));
+// Konfigurasi autentikasi menggunakan JwtSettings
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        var serviceProvider = builder.Services.BuildServiceProvider();
+        var jwtSettings = serviceProvider.GetRequiredService<IOptions<JwtSettings>>().Value;
+        
         options.TokenValidationParameters = new TokenValidationParameters
         {
             // validasi key
             ValidateIssuerSigningKey = true,
             // menentukan key untuk memvalidasi sign token
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
             // validasi token di keluarkan oleh server yang valid
-            ValidIssuer = builder.Configuration["JWT:Issuer"],
+            ValidIssuer = jwtSettings.Issuer,
             // validasi token digunakan audience yang valid
-            ValidAudience = builder.Configuration["JWT:Audience"],
+            ValidAudience = jwtSettings.Audience,
             // validasi token di keluarkan oleh server yang valid
             ValidateIssuer = true,
             // validasi token digunakan audience yang valid
@@ -67,6 +74,12 @@ builder.Services.AddIdentityCore<User>(options =>
 .AddUserManager<UserManager<User>>() // Menambahkan UserManager untuk membuat user
 .AddDefaultTokenProviders(); // Menambahkan token default, konfirmasi email
 
+// Menambahkan layanan Authorization
+builder.Services.AddAuthorization();
+
+// Layanan untuk Controller
+builder.Services.AddControllers();
+
 // Konfigurasi Serilog
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console() // Kirim log ke konsol
@@ -86,16 +99,20 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-
-
 // Endpoint Hello World untuk pengecekan
 app.MapGet("/hello", () => Results.Ok("Hello, World!"))
     .WithName("GetHelloWorld");
 
-// untuk redirect ke https
+// Middleware untuk redirect ke https
 app.UseHttpsRedirection();
 
+// Middleware untuk mengkatifkan autentikasi
+// Memastikan semua permintaan dapat diotentikasi jika token JWT disertakan
 app.UseAuthentication();
+
+// Middleware untuk mengaktifkan otorisasi
+// Memastikan pengguna hanya dapat mengakses endpoint yang dizinkan
 app.UseAuthorization();
+
 app.MapControllers();
 app.Run();

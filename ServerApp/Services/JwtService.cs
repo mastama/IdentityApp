@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using ServerApp.Models;
@@ -9,19 +10,21 @@ namespace ServerApp.Services;
 
 public class JwtService
 {
-    private readonly IConfiguration _configuration;
+    // private readonly IConfiguration _configuration;
     private readonly SymmetricSecurityKey _jwtKey;
+    private readonly JwtSettings _jwtSettings;
 
-    public JwtService(IConfiguration configuration)
+    public JwtService(IOptions<JwtSettings> jwtSettings)
     {
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        
-        var key = _configuration["JWT:Key"];
-        if (string.IsNullOrEmpty(key))
-            throw new InvalidOperationException("JWT key is empty or not configured");
+        // _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        //
+        // var key = _configuration["JWT:Key"];
+        // if (string.IsNullOrEmpty(key))
+        //     throw new InvalidOperationException("JWT key is empty or not configured");
         
         // jwtKey is used for both encripting and depcripting the JWT Token
-        _jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+        _jwtSettings = jwtSettings.Value;
+        _jwtKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key));
     }
 
     public string GenerateToken(User user)
@@ -40,10 +43,10 @@ public class JwtService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(userClaims),
-            Expires = DateTime.UtcNow.AddDays(int.Parse(_configuration["JWT:ExpireDays"] ?? "1")),
+            Expires = DateTime.UtcNow.AddDays(_jwtSettings.ExpiresInDays),
             SigningCredentials = credentials,
-            Issuer = _configuration["JWT:Issuer"],
-            Audience = _configuration["JWT:Audience"],
+            Issuer = _jwtSettings.Issuer,
+            Audience = _jwtSettings.Audience,
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
