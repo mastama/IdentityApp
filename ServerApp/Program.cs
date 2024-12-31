@@ -1,8 +1,12 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using ServerApp.Data;
 using ServerApp.Models;
+using ServerApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +20,28 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection") ??
                       throw new InvalidOperationException("Could not find a your connection string!"));
 });
+
+// Jwt
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            // validasi key
+            ValidateIssuerSigningKey = true,
+            // menentukan key untuk memvalidasi sign token
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]!)),
+            // validasi token di keluarkan oleh server yang valid
+            ValidIssuer = builder.Configuration["JWT:Issuer"],
+            // validasi token digunakan audience yang valid
+            ValidAudience = builder.Configuration["JWT:Audience"],
+            // validasi token di keluarkan oleh server yang valid
+            ValidateIssuer = true,
+            // validasi token digunakan audience yang valid
+            ValidateAudience = false,
+        };
+    });
 
 // Defining our IdentityCore Service
 builder.Services.AddIdentityCore<User>(options =>
@@ -60,36 +86,16 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// untuk redirect ke https
-app.UseHttpsRedirection();
+
 
 // Endpoint Hello World untuk pengecekan
 app.MapGet("/hello", () => Results.Ok("Hello, World!"))
     .WithName("GetHelloWorld");
 
-// Endpoint WeatherForecast
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// untuk redirect ke https
+app.UseHttpsRedirection();
 
-app.MapGet("/weatherforecast", () =>
-    {
-        var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast
-                (
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-            .ToArray();
-        return forecast;
-    })
-    .WithName("GetWeatherForecast");
-
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
