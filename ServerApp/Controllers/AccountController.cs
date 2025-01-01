@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -75,6 +77,33 @@ public class AccountController : ControllerBase
         
         Log.Information("Outgoing User logged in");
         return CreateApplicationUserDto(user);
+    }
+
+    [Authorize]
+    [HttpGet("refresh-user-token")]
+    public async Task<ActionResult<UserDto>> RefreshUserToken()
+    {
+        Log.Information("Incoming refresh user token");
+        var emailClaim = User.FindFirst(ClaimTypes.Email)?.Value;
+        if (string.IsNullOrEmpty(emailClaim))
+        {
+            Log.Warning("Failed to refresh token: email claim is null or empty");
+            return BadRequest(new { message = "Invalid user token: email claim is null or empty" });
+        }
+        
+        var user = await _userManager.FindByEmailAsync(emailClaim);
+        if (user == null)
+        {
+            Log.Warning("Failed to refresh token: No User found for email {Email}", emailClaim);
+            return NotFound(new { message = "User does not exist" });
+        }
+        
+        Log.Information("User found, generating refreshed token for {Email}", emailClaim);
+        
+        // generate dto untuk return
+        var userDto = CreateApplicationUserDto(user);
+        Log.Information("Outgoing refresh user token success for {Email}", emailClaim);
+        return Ok(userDto);
     }
     
     private UserDto CreateApplicationUserDto(User user)

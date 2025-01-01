@@ -37,6 +37,7 @@ public class JwtService
             new Claim(ClaimTypes.Email, user.Email ?? throw new ArgumentException("Email cannot be null, its required!")),
             new Claim(ClaimTypes.GivenName, user.FirstName!),
             new Claim(ClaimTypes.Surname, user.LastName!),
+            new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
             new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? throw new ArgumentException("PhoneNumber cannot be null, its required!")),
         };
         var credentials = new SigningCredentials(_jwtKey, SecurityAlgorithms.HmacSha512Signature);
