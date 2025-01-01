@@ -2,7 +2,6 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using ServerApp.Data;
@@ -22,17 +21,24 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
                       throw new InvalidOperationException("Could not find a your connection string!"));
 });
 
+// // Bind JwtSettings from configuration
+// var jwtSettings = new JwtSettings();
+// builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
+// // Tambahkan JwtSettings sebagai layanan singleton
+// builder.Services.AddSingleton(jwtSettings);
 // Tambahkan JWTService sebagai layanan terdaftar
 builder.Services.AddScoped<JwtService>();
 // Bind JwtSetting from configuration
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSection"));
+
 // Konfigurasi autentikasi menggunakan JwtSettings
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var serviceProvider = builder.Services.BuildServiceProvider();
-        var jwtSettings = serviceProvider.GetRequiredService<IOptions<JwtSettings>>().Value;
-        
+        var jwtSettings = builder.Configuration.GetSection("JwtSection").Get<JwtSettings>();
+        if (string.IsNullOrEmpty(jwtSettings.Key))
+            throw new ArgumentException("JWT Key is missing or empty in configuration.");
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             // validasi key
